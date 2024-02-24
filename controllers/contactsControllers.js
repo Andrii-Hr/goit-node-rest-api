@@ -1,79 +1,74 @@
-const {
-    addContact,
-    getContactById,
-    removeContact,
-    updateContact,
-    listContacts,
-  } = require("../models/contacts");
-  
-  const getContacts = async (_, res) => {
-    const data = await listContacts();
-    res.status(200).json({ status: `Successfully!`, statusCode: 200, data });
-  };
-  
-  const getContById = async (req, res) => {
-    const { contactId } = req.params;
-    const data = await getContactById(contactId);
-    if (!data) {
-      return res.status(404).json({
-        message: `Contact with id: ${contactId} not found`,
-        statusCode: 404,
-      });
+import HttpError from "../helpers/HttpError.js";
+import {
+  addSchema,
+  updateSchema,
+} from "../schemas/contactsSchemas.js";
+import * as contactsService from "../services/contactsServices.js";
+
+export const getAllContacts = async (req, res, next) => {
+  try {
+    const result = await contactsService.listContacts();
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getOneContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await contactsService.getContactById(id);
+    if (!result) {
+      throw HttpError(404);
     }
-    res.status(200).json({ code: 200, data });
-  };
-  
-  const addCont = async (req, res) => {
-    const body = req.body;
-    const data = await addContact(body);
-    res.status(201).json({
-      status: `Contact added successfully!`,
-      code: 201,
-      data,
-    });
-  };
-  
-  const deleteCont = async (req, res) => {
-    const { contactId } = req.params;
-    const data = await removeContact(contactId);
-  
-    if (!data) {
-      return res.status(404).json({
-        message: `Contact with id ${contactId} not found!`,
-        code: 404,
-      });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await contactsService.removeContact(id);
+    if (!result) {
+      throw HttpError(404);
     }
-  
-    res.status(200).json({
-      message: "Contact deleted successfully!",
-      code: 200,
-      data,
-    });
-  };
-  
-  const updateCont = async (req, res) => {
-    const { contactId } = req.params;
-    const contact = req.body;
-  
-    const data = await updateContact(contactId, contact);
-  
-    if (!data) {
-      return res.status(404).json({
-        status: `Failure, no contact with id ${contactId} found!`,
-        statusCode: 404,
-      });
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createContact = async (req, res, next) => {
+  try {
+    const { error } = addSchema.validate(req.body);
+    if (error) throw HttpError(400, error.message);
+
+    const result = await contactsService.addContact(req.body);
+
+    res.status(201).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateContact = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { error } = updateSchema.validate(req.body);
+    if (error) throw HttpError(400, error.message);
+
+    if (Object.keys(req.body).length === 0) {
+      throw HttpError(400, "Body must have at least one field");
     }
-    res.status(200).json({
-      status: `Contact with id ${contactId} change successfully!`,
-      statusCode: 200,
-      data,
-    });
-  };
-  
-  module.exports = {
-    getContacts,
-    getContById,
-    addCont,
-    deleteCont,
-    updateCont,
-  };
+    const result = await contactsService.updateContact(id, req.body);
+    if (!result) {
+      throw HttpError(404);
+    }
+
+    return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
