@@ -4,7 +4,6 @@ const messageList = {
     403: "Forbidden",
     404: "Not Found",
     409: "Conflict",
-    500:"Server error"
 }
 
 const HttpError = (status, message = messageList[status]) => {
@@ -13,4 +12,4 @@ const HttpError = (status, message = messageList[status]) => {
     return error;
 }
 
-module.exports= HttpError;
+export default HttpError;
